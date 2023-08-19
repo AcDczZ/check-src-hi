@@ -72,7 +72,7 @@ static unsigned short status_calc_con(struct block_list *, status_change *, int)
 static unsigned short status_calc_crt(struct block_list *, status_change *, int);
 static unsigned short status_calc_batk(struct block_list *,status_change *,int);
 static unsigned short status_calc_watk(struct block_list *,status_change *,int);
-static unsigned short status_calc_matk(struct block_list *,status_change *,int);
+static unsigned int status_calc_matk(struct block_list *,status_change *,int);	/*extreme_custom_src*/
 static signed short status_calc_hit(struct block_list *,status_change *,int);
 static signed short status_calc_critical(struct block_list *,status_change *,int);
 static signed short status_calc_flee(struct block_list *,status_change *,int);
@@ -2399,8 +2399,8 @@ unsigned int status_weapon_atk(weapon_atk &wa)
 #endif
 
 #ifndef RENEWAL
-unsigned short status_base_matk_min(const struct status_data* status) { return status->int_ + (status->int_ / 7) * (status->int_ / 7); }
-unsigned short status_base_matk_max(const struct status_data* status) { return status->int_ + (status->int_ / 5) * (status->int_ / 5); }
+unsigned int status_base_matk_min(const struct status_data* status) { return status->int_ + (status->int_ / 7) * (status->int_ / 7); }
+unsigned int status_base_matk_max(const struct status_data* status) { return status->int_ + (status->int_ / 5) * (status->int_ / 5); }
 #else
 /*
 * Calculates minimum attack variance 80% from db's ATK1 for non BL_PC
@@ -2443,7 +2443,7 @@ unsigned short status_base_atk_max(struct block_list *bl, const struct status_da
 /*
 * Calculates minimum magic attack
 */
-unsigned short status_base_matk_min(struct block_list *bl, const struct status_data* status, int level)
+unsigned int status_base_matk_min(struct block_list *bl, const struct status_data* status, int level)
 {
 	switch (bl->type) {
 		case BL_PET:
@@ -2462,7 +2462,7 @@ unsigned short status_base_matk_min(struct block_list *bl, const struct status_d
 /*
 * Calculates maximum magic attack
 */
-unsigned short status_base_matk_max(struct block_list *bl, const struct status_data* status, int level)
+unsigned int status_base_matk_max(struct block_list *bl, const struct status_data* status, int level)
 {
 	switch (bl->type) {
 		case BL_PET:
@@ -2616,7 +2616,7 @@ void status_calc_misc(struct block_list *bl, struct status_data *status, int lev
 
 	if (bl->type&battle_config.enable_perfect_flee) {
 		stat = status->flee2;
-		stat += status->luk + 10; // (every 10 luk = +1 perfect flee)
+		//stat += status->luk + 10; // (every 10 luk = +1 perfect flee)
 		status->flee2 = cap_value(stat, 0, SHRT_MAX);
 	} else
 		status->flee2 = 0;
@@ -2670,6 +2670,7 @@ int status_calc_mob_(struct mob_data* md, uint8 opt)
 		else
 			md->level = md->db->lv;
 		md->damagetaken = md->db->damagetaken;
+		md->damagetaken2 = md->db->damagetaken2;
 	}
 
 	// Check if we need custom base-status
@@ -3771,7 +3772,7 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 		if (!sd->inventory_data[index])
 			continue;
 
-		base_status->def += sd->inventory_data[index]->def;
+		//base_status->def += sd->inventory_data[index]->def;	/*extreme_custom_src*/
 
 		// Items may be equipped, their effects however are nullified.
 		if (opt&SCO_FIRST && sd->inventory_data[index]->equip_script && (pc_has_permission(sd,PC_PERM_USE_ALL_EQUIPMENT)
@@ -3950,7 +3951,7 @@ int status_calc_pc_sub(map_session_data* sd, uint8 opt)
 	memcpy(sd->indexed_bonus.param_equip,sd->indexed_bonus.param_bonus,sizeof(sd->indexed_bonus.param_equip));
 	memset(sd->indexed_bonus.param_bonus, 0, sizeof(sd->indexed_bonus.param_bonus));
 
-	base_status->def += (refinedef+50)/100;
+	base_status->def += ((refinedef)/100)*2/3;
 
 	// Parse Cards
 	for (i = 0; i < EQI_MAX; i++) {
@@ -6215,8 +6216,15 @@ void status_calc_bl_(struct block_list* bl, std::bitset<SCB_MAX> flag, uint8 opt
 			clif_updatestatus(sd,SP_CRITICAL);
 #ifndef RENEWAL
 		if(b_status.matk_max != status->matk_max)
+			// Cheap way to trigger a recalculation (Danil0v3s)
+			if (b_status.matk_max == 0) {
+				status->matk_max -= 1;
+			}
 			clif_updatestatus(sd,SP_MATK1);
 		if(b_status.matk_min != status->matk_min)
+			if (b_status.matk_min == 0) {
+				status->matk_min -= 1;
+			}
 			clif_updatestatus(sd,SP_MATK2);
 #else
 		if(b_status.matk_max != status->matk_max || b_status.matk_min != status->matk_min) {
@@ -6450,8 +6458,15 @@ static unsigned short status_calc_agi(struct block_list *bl, status_change *sc, 
 		agi += 4; // Added based on skill updates [Reddozen]
 	if(sc->getSCE(SC_DECREASEAGI))
 		agi -= sc->getSCE(SC_DECREASEAGI)->val2;
-	if(sc->getSCE(SC_QUAGMIRE))
-		agi -= sc->getSCE(SC_QUAGMIRE)->val2;
+	if(sc->getSCE(SC_DONTFORGETME) && !sc->getSCE(SC_QUAGMIRE))		/*extreme_custom_src*/
+		//agi -= sc->getSCE(SC_QUAGMIRE)->val2;
+		agi -= agi *85/100;
+	if(sc->getSCE(SC_QUAGMIRE) && !sc->getSCE(SC_DONTFORGETME))		/*extreme_custom_src*/
+		//agi -= sc->getSCE(SC_QUAGMIRE)->val2;
+		agi -= agi *20/100;
+	if(sc->getSCE(SC_DONTFORGETME) && sc->getSCE(SC_QUAGMIRE))		/*extreme_custom_src*/
+		//agi -= sc->getSCE(SC_QUAGMIRE)->val2;
+		agi -= agi *85/100;
 	if(sc->getSCE(SC_SUITON) && sc->getSCE(SC_SUITON)->val3)
 		agi -= sc->getSCE(SC_SUITON)->val2;
 	if(sc->getSCE(SC_MARIONETTE))
@@ -6696,7 +6711,8 @@ static unsigned short status_calc_dex(struct block_list *bl, status_change *sc, 
 	if(sc->getSCE(SC_TRUESIGHT))
 		dex += 5;
 	if(sc->getSCE(SC_QUAGMIRE))
-		dex -= sc->getSCE(SC_QUAGMIRE)->val2;
+		//dex -= sc->getSCE(SC_QUAGMIRE)->val2;
+		dex -= dex * 20/100;
 	if(sc->getSCE(SC_BLESSING)) {
 		if (sc->getSCE(SC_BLESSING)->val2)
 			dex += sc->getSCE(SC_BLESSING)->val2;
@@ -7211,10 +7227,10 @@ static unsigned short status_calc_ematk(struct block_list *bl, status_change *sc
  * @param matk: Initial matk
  * @return modified matk with cap_value(matk,0,USHRT_MAX)
  */
-static unsigned short status_calc_matk(struct block_list *bl, status_change *sc, int matk)
+static unsigned int status_calc_matk(struct block_list *bl, status_change *sc, int matk)
 {
 	if(!sc || !sc->count)
-		return cap_value(matk,0,USHRT_MAX);
+		return cap_value(matk,0,UINT_MAX);
 #ifndef RENEWAL
 	/// Take note fixed value first before % modifiers [PRE-RENEWAL]
 	if (sc->getSCE(SC_MATKPOTION))
@@ -7285,7 +7301,7 @@ static unsigned short status_calc_matk(struct block_list *bl, status_change *sc,
 	if (sc->getSCE(SC_CLIMAX_DES_HU))
 		matk += 100;
 
-	return (unsigned short)cap_value(matk,0,USHRT_MAX);
+	return (unsigned int)cap_value(matk,0,UINT_MAX);
 }
 
 /**
@@ -9421,6 +9437,38 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 #endif
 
 	switch (type) {
+		
+		case SC_SILENCE:
+		case SC_SLEEP:
+			sc_def = 7500;
+			tick_def = 7500;
+			break;
+			
+		case SC_STONEWAIT:
+			sc_def = 5000;
+			tick_def = 7500;	
+			break;
+			
+		case SC_FREEZE:
+		case SC_CONFUSION:
+			tick_def = 5000;	
+			break;
+			
+		case SC_POISON:
+		case SC_DPOISON:
+		case SC_STUN:
+		case SC_BLEEDING:
+		case SC_BLIND:
+			tick_def = 5000;	
+			break;
+			
+		case SC_CURSE:
+			// Special property: immunity when luk is zero
+			if (status->luk == 0)
+				return 0;	
+			tick_def = 5000;
+			break;
+/*		
 		case SC_POISON:
 		case SC_DPOISON:
 #ifndef RENEWAL
@@ -9450,6 +9498,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			tick_def2 = -500;
 #endif
 			break;
+		
 		case SC_SILENCE:
 #ifndef RENEWAL
 			sc_def = status->vit*100;
@@ -9460,6 +9509,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			tick_def2 = -2000;
 #endif
 			break;
+	
 		case SC_BLEEDING:
 #ifndef RENEWAL
 			sc_def = status->vit*100;
@@ -9470,6 +9520,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			tick_def2 = -12000;
 #endif
 			break;
+		
 		case SC_SLEEP:
 #ifndef RENEWAL
 			sc_def = status->int_*100;
@@ -9500,6 +9551,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			tick_def2 = -3000;
 #endif
 			break;
+		
 		case SC_CURSE:
 			// Special property: immunity when luk is zero
 			if (status->luk == 0)
@@ -9513,7 +9565,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			sc_def = status->luk * 100 - levelAdv;
 			tick_def2 = -2000;
 #endif
-			break;
+			break;			
 		case SC_BLIND:
 #ifndef RENEWAL
 			sc_def = (status->vit + status->int_)*50;
@@ -9534,6 +9586,7 @@ t_tick status_get_sc_def(struct block_list *src, struct block_list *bl, enum sc_
 			tick_def2 = -2000;
 #endif
 			break;
+*/
 		case SC_DECREASEAGI:
 			if (sd)
 				tick /= 2; // Half duration for players.
@@ -11105,7 +11158,9 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 				while( i >= 0 ) {
 					enum sc_type type2 = types[i];
 					if( d_sc->getSCE(type2) )
-						status_change_start(d_bl, bl, type2, 10000, d_sc->getSCE(type2)->val1, 0, 0, (type2 == SC_REFLECTSHIELD ? 1 : 0), skill_get_time(status_db.getSkill(type2),d_sc->getSCE(type2)->val1), (type2 == SC_DEFENDER) ? SCSTART_NOAVOID : SCSTART_NOAVOID|SCSTART_NOICON);
+						status_change_start(d_bl, bl, type2, 10000, d_sc->getSCE(type2)->val1, 0, 0, (type2 == SC_REFLECTSHIELD ? 1 : 0), skill_get_time(status_db.getSkill(type2),d_sc->getSCE(type2)->val1), (type2 == SC_DEFENDER) ? SCSTART_NONE : SCSTART_NOAVOID|SCSTART_NOICON);
+						//status_change_start(d_bl, bl, type2, 10000, d_sc->getSCE(type2)->val1, 0, 0, (type2 == SC_REFLECTSHIELD ? 1 : 0), skill_get_time(status_db.getSkill(type2),d_sc->getSCE(type2)->val1), (type2 == SC_DEFENDER) ? SCSTART_NOAVOID : SCSTART_NOAVOID|SCSTART_NOICON);
+						//status_change_start(d_bl, bl, type2, 10000, d_sc->data[type2]->val1, 0, 0, (type2 == SC_REFLECTSHIELD ? 1 : 0), skill_get_time(status_sc2skill(type2),d_sc->data[type2]->val1), (type2 == SC_DEFENDER) ? SCSTART_NONE : SCSTART_NOAVOID);
 					i--;
 				}
 			}
@@ -11240,7 +11295,8 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 		case SC_CONCENTRATION:
 #ifdef RENEWAL
 			val2 = 5 + val1 * 2; // Batk/Watk Increase
-			val4 = 5 + val1 * 2; // Def reduction
+			//val4 = 5 + val1 * 2; // Def reduction
+			val4 = val1 * 2; // Def reduction /*extreme_custom_src*/
 #else
 			val2 = 5*val1; // Batk/Watk Increase
 			val4 = 5*val1; // Def reduction
@@ -11400,11 +11456,14 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 		case SC_APACHE_JEXPBOOST_S:
 		
 		// Seperate Bubble Gum
-		case SC_CARD_BUBBLE_GUM5:
-		case SC_CARD_BUBBLE_GUM25:
+		case SC_USABLE_BUBBLE_GUM50:
+		case SC_USABLE_BUBBLE_GUM100:
+		case SC_EQ_BUBBLE_GUM50:
+		case SC_EQ_BUBBLE_GUM100:
+		case SC_ETC_BUBBLE_GUM50:
+		case SC_ETC_BUBBLE_GUM100:
 		case SC_CARD_BUBBLE_GUM50:
 		case SC_CARD_BUBBLE_GUM100:
-		
 			if (val1 < 0)
 				val1 = 0;
 			break;
@@ -12748,6 +12807,7 @@ int status_change_start(struct block_list* src, struct block_list* bl,enum sc_ty
 				break;
 			case SC_FREEZE:
 			case SC_STUN:
+			case SC_STUN2:
 			case SC_STONE:
 				if (sc->getSCE(SC_DANCING)) {
 					unit_stop_walking(bl, 1);

@@ -14322,8 +14322,16 @@ BUILDIN_FUNC(getmapflag)
 
 	union u_mapflag_args args = {};
 
-	if (mf == MF_SKILL_DAMAGE && !script_hasdata(st, 4))
-		args.flag_val = SKILLDMG_MAX;
+	if (!script_hasdata(st, 4)) {
+		switch (mf) {
+			case MF_SKILL_DAMAGE:
+				args.flag_val = SKILLDMG_MAX;
+				break;
+			case MF_ATK_RATE:
+				args.flag_val = DMGRATE_MAX;
+				break;
+		}
+	}
 	else
 		FETCH(4, args.flag_val);
 
@@ -14387,6 +14395,14 @@ BUILDIN_FUNC(setmapflag)
 			args.nightmaredrop.drop_id = -1;
 			args.nightmaredrop.drop_per = 300;
 			args.nightmaredrop.drop_type = NMDT_EQUIP;
+			break;
+		case MF_ATK_RATE:
+			if (script_hasdata(st, 4) && script_hasdata(st, 5))
+				args.atk_rate.rate[script_getnum(st, 5)] = script_getnum(st, 4);
+			else {
+				ShowWarning("buildin_setmapflag: Unable to set atk_rate mapflag as flag data is missing.\n");
+				return SCRIPT_CMD_FAILURE;
+			}
 			break;
 		default:
 			FETCH(4, args.flag_val);
@@ -19774,6 +19790,7 @@ BUILDIN_FUNC(getunitdata)
 			getunitdata_sub(UMOB_RES, md->status.res);
 			getunitdata_sub(UMOB_MRES, md->status.mres);
 			getunitdata_sub(UMOB_DAMAGETAKEN, md->damagetaken);
+			getunitdata_sub(UMOB_DAMAGETAKEN2, md->damagetaken2);
 			break;
 
 		case BL_HOM:
@@ -20182,6 +20199,7 @@ BUILDIN_FUNC(setunitdata)
 			case UMOB_RES: md->base_status->res = (short)value; calc_status = true; break;
 			case UMOB_MRES: md->base_status->mres = (short)value; calc_status = true; break;
 			case UMOB_DAMAGETAKEN: md->damagetaken = (unsigned short)value; break;
+			case UMOB_DAMAGETAKEN2: md->damagetaken2 = (unsigned short)value; break;
 			default:
 				ShowError("buildin_setunitdata: Unknown data identifier %d for BL_MOB.\n", type);
 				return SCRIPT_CMD_FAILURE;

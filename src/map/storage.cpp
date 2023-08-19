@@ -275,7 +275,7 @@ void read_int_array_from_file(const char* filename, long** array, long* size) {
  * @param amount : quantity of items
  * @return 0:success, 1:failed, 2:failed because of room or stack checks
  */
-static int storage_additem(struct map_session_data* sd, struct s_storage *stor, struct item *it, int amount)
+static int storage_additem(map_session_data* sd, struct s_storage *stor, struct item *it, int amount)
 {
 	struct item_data* data;
 	long i, listidx, a, list;

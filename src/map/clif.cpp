@@ -22648,20 +22648,21 @@ void clif_refineui_info( map_session_data* sd, uint16 index ){
 					Bonus3 = 4;		
 				if( sd->sc.getSCE(SC_MEMBERLV5) )
 					Bonus3 = 5;		
-				if( sd->sc.getSCE(SC_MEMBERLV6) )
-					Bonus3 = 6;		
-				if( sd->sc.getSCE(SC_MEMBERLV7) )
-					Bonus3 = 7;		
-				if( sd->sc.getSCE(SC_MEMBERLV8) )
-					Bonus3 = 8;		
-				if( sd->sc.getSCE(SC_MEMBERLV9) )
-					Bonus3 = 9;		
-				if( sd->sc.getSCE(SC_MEMBERLV10) )
-					Bonus3 = 10;	
 				*/
+				if( sd->sc.getSCE(SC_MEMBERLV6) )
+					Bonus3 = 1;		
+				if( sd->sc.getSCE(SC_MEMBERLV7) )
+					Bonus3 = 2;		
+				if( sd->sc.getSCE(SC_MEMBERLV8) )
+					Bonus3 = 3;		
+				if( sd->sc.getSCE(SC_MEMBERLV9) )
+					Bonus3 = 4;		
+				if( sd->sc.getSCE(SC_MEMBERLV10) )
+					Bonus3 = 5;	
+				
 
-				p->req[count].chance = cap_value( p->req[count].chance + ( p->req[count].chance * (Bonus2 + Bonus3 + battle_config.refine_eventpercent) /100 )  , 0, 100 );	 /*extreme_custom_src*/	
-				p->req[count].chance = cap_value( p->req[count].chance + Bonus4 + Bonus1 + battle_config.refine_event , 0, 100 );	 /*extreme_custom_src*/					
+				p->req[count].chance = cap_value( p->req[count].chance + ( p->req[count].chance * (Bonus2 + battle_config.refine_eventpercent) /100 )  , 0, 100 );	 /*extreme_custom_src*/	
+				p->req[count].chance = cap_value( p->req[count].chance + Bonus3 + Bonus4 + Bonus1 + battle_config.refine_event , 0, 100 );	 /*extreme_custom_src*/					
 				p->req[count].zeny = (cost->zeny * battle_config.refine_eventzeny /100 );
 				//p->req[count].zeny = (cost->zeny );
 				p->packetLength += sizeof( struct PACKET_ZC_REFINING_MATERIAL_LIST_SUB );
@@ -22706,7 +22707,7 @@ void clif_parse_refineui_add( int fd, map_session_data* sd ){
 void clif_parse_refineui_refine( int fd, map_session_data* sd ){
 #if PACKETVER >= 20161012
 	struct PACKET_CZ_REQ_REFINING* p = (struct PACKET_CZ_REQ_REFINING*)RFIFOP( fd, 0 );
-	int count;
+	int16 count = 0;
 	int Bonus11 = 0;
 	int Bonus22 = 0;
 	int Bonus33 = 0;	
@@ -22846,19 +22847,20 @@ void clif_parse_refineui_refine( int fd, map_session_data* sd ){
 					Bonus33 = 4;		
 				if( sd->sc.getSCE(SC_MEMBERLV5) )
 					Bonus33 = 5;		
-				if( sd->sc.getSCE(SC_MEMBERLV6) )
-					Bonus33 = 6;		
-				if( sd->sc.getSCE(SC_MEMBERLV7) )
-					Bonus33 = 7;		
-				if( sd->sc.getSCE(SC_MEMBERLV8) )
-					Bonus33 = 8;		
-				if( sd->sc.getSCE(SC_MEMBERLV9) )
-					Bonus33 = 9;		
-				if( sd->sc.getSCE(SC_MEMBERLV10) )
-					Bonus33 = 10;		
 				*/
-	Finalrate = cap_value( ( cost->chance + ( cost->chance * (Bonus22 + Bonus33 + battle_config.refine_eventpercent) /100 ) ), 0, 10000 );	 /*extreme_custom_src*/	
-	Finalrate = ( Finalrate + Bonus11 + Bonus44 + (battle_config.refine_event*100) );	 /*extreme_custom_src*/	
+				if( sd->sc.getSCE(SC_MEMBERLV6) )
+					Bonus33 = 1;		
+				if( sd->sc.getSCE(SC_MEMBERLV7) )
+					Bonus33 = 2;		
+				if( sd->sc.getSCE(SC_MEMBERLV8) )
+					Bonus33 = 3;		
+				if( sd->sc.getSCE(SC_MEMBERLV9) )
+					Bonus33 = 4;		
+				if( sd->sc.getSCE(SC_MEMBERLV10) )
+					Bonus33 = 5;		
+				
+	Finalrate = cap_value( ( cost->chance + ( cost->chance * (Bonus22 + battle_config.refine_eventpercent) /100 ) ), 0, 10000 );	 /*extreme_custom_src*/	
+	Finalrate = ( Finalrate + Bonus11 + Bonus33 + Bonus44 + (battle_config.refine_event*100) );	 /*extreme_custom_src*/	
 
 
 	// Try to refine the item

@@ -2434,6 +2434,7 @@ void pc_authfail(map_session_data *sd)
  */
 bool pc_set_hate_mob(map_session_data *sd, int pos, struct block_list *bl)
 {
+
 	int class_;
 	if (!sd || !bl || pos < 0 || pos > 2)
 		return false;
@@ -2442,7 +2443,6 @@ bool pc_set_hate_mob(map_session_data *sd, int pos, struct block_list *bl)
 		clif_hate_info(sd, pos, sd->hate_mob[pos], 0); //Display current
 		return false;
 	}
-
 	class_ = status_get_class(bl);
 	if (!pcdb_checkid(class_)) {
 		unsigned int max_hp = status_get_max_hp(bl);

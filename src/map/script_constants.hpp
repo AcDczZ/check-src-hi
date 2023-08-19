@@ -555,7 +555,8 @@
 	export_constant(MF_NOPETCAPTURE);
 	export_constant(MF_NOBUYINGSTORE);
 	export_constant(MF_NODYNAMICNPC);
-	export_constant(MF_MVP);
+	export_constant(MF_DROPEVENT1);
+	export_constant(MF_DROPEVENT2);
 
 	/* setcell types */
 	export_constant(CELL_WALKABLE);
@@ -1891,7 +1892,6 @@
 	export_constant(SC_WEAPONBREAKER);
 	export_constant(SC_REFINEPLUS);					/*extreme_custom_src*/
 	export_constant(SC_REFINEPLUS2);				/*extreme_custom_src*/
-	export_constant(SC_ABILITY);					/*extreme_custom_src*/
 	export_constant(SC_FAILSTACK);					/*extreme_custom_src*/
 	export_constant(SC_MEMBERLV0);					/*extreme_custom_src*/
 	export_constant(SC_MEMBERLV1);					/*extreme_custom_src*/
@@ -1926,12 +1926,17 @@
 	export_constant(SC_APACHE_STORAGE);
 	export_constant(SC_APACHE_LIFEINSURANCE);
 	
-	export_constant(SC_CARD_BUBBLE_GUM5);
-	export_constant(SC_CARD_BUBBLE_GUM25);
+	export_constant(SC_USABLE_BUBBLE_GUM50);
+	export_constant(SC_USABLE_BUBBLE_GUM100);
+	export_constant(SC_EQ_BUBBLE_GUM50);
+	export_constant(SC_EQ_BUBBLE_GUM100);
+	export_constant(SC_ETC_BUBBLE_GUM50);
+	export_constant(SC_ETC_BUBBLE_GUM100);
 	export_constant(SC_CARD_BUBBLE_GUM50);
 	export_constant(SC_CARD_BUBBLE_GUM100);
 	
 	export_constant(SC_AUTOATTACK);
+	export_constant(SC_STUN2);
 	
 #ifdef RENEWAL
 	export_constant(SC_EXTREMITYFIST2);
@@ -4220,8 +4225,12 @@
 	export_constant(EFST_VOTELV9);						/*extreme_custom_src*/
 	export_constant(EFST_VOTELV10);						/*extreme_custom_src*/
 	
-	export_constant(EFST_CARD_BUBBLE_GUM5);
-	export_constant(EFST_CARD_BUBBLE_GUM25);
+	export_constant(EFST_USABLE_BUBBLE_GUM50);
+	export_constant(EFST_USABLE_BUBBLE_GUM100);
+	export_constant(EFST_EQ_BUBBLE_GUM50);
+	export_constant(EFST_EQ_BUBBLE_GUM100);
+	export_constant(EFST_ETC_BUBBLE_GUM50);
+	export_constant(EFST_ETC_BUBBLE_GUM100);
 	export_constant(EFST_CARD_BUBBLE_GUM50);
 	export_constant(EFST_CARD_BUBBLE_GUM100);
 	
@@ -4889,6 +4898,7 @@
 	export_constant(UMOB_RES);
 	export_constant(UMOB_MRES);
 	export_constant(UMOB_DAMAGETAKEN);
+	export_constant(UMOB_DAMAGETAKEN2);
 
 	/* unit control - homunculus */
 	export_constant(UHOM_SIZE);
@@ -9584,6 +9594,15 @@
 	export_constant(PCBLOCK_NPC);
 	export_constant(PCBLOCK_EMOTION);
 	export_constant(PCBLOCK_ALL);
+
+	// Global Damage [Cydh]
+	export_constant(MF_ATK_RATE);
+	export_constant(DMGRATE_BL);
+	export_constant(DMGRATE_SHORT);
+	export_constant(DMGRATE_LONG);
+	export_constant(DMGRATE_WEAPON);
+	export_constant(DMGRATE_MAGIC);
+	export_constant(DMGRATE_MISC);
 
 	/* convertpcinfo command */
 	export_constant(CPC_NAME);

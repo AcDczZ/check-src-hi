@@ -65,7 +65,7 @@
 * Max value tested was 265 */
 #ifndef MAX_CHARS
 	#if PACKETVER >= 20180124
-		#define MAX_CHARS 265
+		#define MAX_CHARS 128
 	#elif PACKETVER >= 20100413
 		#define MAX_CHARS 12
 	#else

@@ -33,7 +33,7 @@ class status_change;
 #ifdef RENEWAL
 #	define MAX_REFINE 20
 #else
-#	define MAX_REFINE 10
+#	define MAX_REFINE 20
 #endif
 
 /// Refine type
@@ -1272,7 +1272,6 @@ enum sc_type : int16 {
 	SC_WEAPONBREAKER,
 	SC_REFINEPLUS,						/*extreme_custom_src*/	
 	SC_REFINEPLUS2,						/*extreme_custom_src*/	
-	SC_ABILITY,						/*extreme_custom_src*/	
 	SC_FAILSTACK,						/*extreme_custom_src*/	
 	SC_MEMBERLV0,						/*extreme_custom_src*/	
 	SC_MEMBERLV1,						/*extreme_custom_src*/	
@@ -1297,12 +1296,17 @@ enum sc_type : int16 {
 	SC_VOTELV9,						/*extreme_custom_src*/	
 	SC_VOTELV10,						/*extreme_custom_src*/
 
-	SC_CARD_BUBBLE_GUM5,
-	SC_CARD_BUBBLE_GUM25,
+	SC_USABLE_BUBBLE_GUM50,
+	SC_USABLE_BUBBLE_GUM100,
+	SC_EQ_BUBBLE_GUM50,
+	SC_EQ_BUBBLE_GUM100,
+	SC_ETC_BUBBLE_GUM50,
+	SC_ETC_BUBBLE_GUM100,	
 	SC_CARD_BUBBLE_GUM50,
 	SC_CARD_BUBBLE_GUM100,
 	
 	SC_AUTOATTACK,
+	SC_STUN2,
 	SC_ITEMBOOST_HE,
 	
 #ifdef RENEWAL
@@ -2747,9 +2751,13 @@ enum efst_type : short{
 	EFST_VOTELV8 = 9958,								/*extreme_custom_src*/	
 	EFST_VOTELV9 = 9959,								/*extreme_custom_src*/	
 	EFST_VOTELV10 = 9960,								/*extreme_custom_src*/	
-
-	EFST_CARD_BUBBLE_GUM5 = 9965,
-	EFST_CARD_BUBBLE_GUM25 = 9966,
+	
+	EFST_USABLE_BUBBLE_GUM50 = 9961,
+	EFST_USABLE_BUBBLE_GUM100 = 9962,	
+	EFST_EQ_BUBBLE_GUM50 = 9963,
+	EFST_EQ_BUBBLE_GUM100 = 9964,	
+	EFST_ETC_BUBBLE_GUM50 = 9965,
+	EFST_ETC_BUBBLE_GUM100 = 9966,	
 	EFST_CARD_BUBBLE_GUM50 = 9967,
 	EFST_CARD_BUBBLE_GUM100 = 9968,
 
@@ -3188,7 +3196,7 @@ struct weapon_atk {
 struct status_data {
 	unsigned int
 		hp, sp, ap, // see status_cpy before adding members before hp and sp
-		max_hp, max_sp, max_ap;
+		max_hp, max_sp, max_ap,matk_min, matk_max;
 	short
 		str, agi, vit, int_, dex, luk,
 		pow, sta, wis, spl, con, crt,
@@ -3199,7 +3207,6 @@ struct status_data {
 		watk,
 		watk2,
 #endif
-		matk_min, matk_max,
 		speed,
 		amotion, adelay, dmotion;
 	int mode;
@@ -3524,14 +3531,14 @@ int status_check_visibility(struct block_list *src, struct block_list *target);
 int status_change_spread(block_list *src, block_list *bl);
 
 #ifndef RENEWAL
-unsigned short status_base_matk_min(const struct status_data* status);
-unsigned short status_base_matk_max(const struct status_data* status);
+unsigned int status_base_matk_min(const struct status_data* status);
+unsigned int status_base_matk_max(const struct status_data* status);
 #else
 unsigned int status_weapon_atk(struct weapon_atk wa, map_session_data *sd);
 unsigned short status_base_atk_min(struct block_list *bl, const struct status_data* status, int level);
 unsigned short status_base_atk_max(struct block_list *bl, const struct status_data* status, int level);
-unsigned short status_base_matk_min(struct block_list *bl, const struct status_data* status, int level);
-unsigned short status_base_matk_max(struct block_list *bl, const struct status_data* status, int level);
+unsigned int status_base_matk_min(struct block_list *bl, const struct status_data* status, int level);
+unsigned int status_base_matk_max(struct block_list *bl, const struct status_data* status, int level);
 #endif
 
 unsigned short status_base_atk(const struct block_list *bl, const struct status_data *status, int level);

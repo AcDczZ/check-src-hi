@@ -839,7 +839,13 @@ bool skill_isNotOk(uint16 skill_id, map_session_data *sd)
 
 	if (skill_id == AL_TELEPORT && sd->skillitem == skill_id && sd->skillitemlv > 2)
 		return false; // Teleport lv 3 bypasses this check.[Inkfish]
+	
+	//if (skill_id == AS_SONICBLOW && sd->skillitem == skill_id && sd->skillitemlv > 2)
+	
+	if (sd->state.autocast && skill_id == AS_SONICBLOW && pc_readglobalreg(sd,add_str("AS_SONICBLOW"))>0 )
+			return true;
 
+	
 	struct map_data *mapdata = map_getmapdata(sd->bl.m);
 
 	if (mapdata->flag[MF_NOSKILL] && skill_id != ALL_EQSWITCH && !sd->skillitem) //Item skills bypass noskill
@@ -1364,10 +1370,11 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 						if ((sd->class_ & MAPID_THIRDMASK) == MAPID_RANGER)
 							rate = 5;
 						else
-							rate = (sd->status.job_level + 9) / 10;
-
-						skill_castend_damage_id(src, bl, HT_BLITZBEAT, (skill < rate) ? skill : rate, tick, 0);
-						
+							//rate = (sd->status.job_level + 9) / 10;
+							rate = 5;
+						//skill_castend_damage_id(src, bl, HT_BLITZBEAT, (skill < rate) ? skill : rate, tick, SD_LEVEL);
+						skill_castend_damage_id(src, bl, SN_FALCONASSAULT, (skill < rate) ? skill : rate, tick, SD_LEVEL);						
+					
 					}
 					// Automatic trigger of Warg Strike
 					if (pc_iswug(sd) && (skill = pc_checkskill(sd, RA_WUGSTRIKE)) > 0) {
@@ -1470,7 +1477,7 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 		break;
 
 	case WZ_FROSTNOVA:
-		sc_start(src,bl,SC_FREEZE,skill_lv*5+33,skill_lv,skill_get_time2(skill_id,skill_lv));
+		sc_start(src,bl,SC_FREEZE,skill_lv*5,skill_lv,skill_get_time2(skill_id,skill_lv));
 		break;
 
 	case WZ_STORMGUST:
@@ -1608,11 +1615,11 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 		break;
 
 	case BA_FROSTJOKER:
-		sc_start(src,bl,SC_FREEZE,(15+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
+		sc_start(src,bl,SC_FREEZE,(3*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
 		break;
 
 	case DC_SCREAM:
-		sc_start(src,bl,SC_STUN,(25+5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
+		sc_start(src,bl,SC_STUN,(5*skill_lv),skill_lv,skill_get_time2(skill_id,skill_lv));
 		break;
 
 	case BD_LULLABY:
@@ -1745,6 +1752,7 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 
 	case WS_CARTTERMINATION:	// Cart termination
 		sc_start(src,bl,SC_STUN,5*skill_lv,skill_lv,skill_get_time2(skill_id,skill_lv));
+		sc_start(src,bl,SC_STUN2,2,skill_lv,skill_get_time2(skill_id,skill_lv)/5);
 		break;
 
 	case CR_ACIDDEMONSTRATION:
@@ -1845,9 +1853,9 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 	case AB_ADORAMUS:
 		sc_start(src,bl, SC_ADORAMUS, skill_lv * 4 + (sd ? sd->status.job_level : 50) / 2, skill_lv, skill_get_time2(skill_id, skill_lv));
 		break;
-	case WL_COMET:
-		sc_start(src, bl, SC_MAGIC_POISON, 100, skill_lv, 20000);
-		break;
+	//case WL_COMET:
+	//	sc_start(src, bl, SC_MAGIC_POISON, 100, skill_lv, 20000);
+	//	break;
 	case NPC_COMET:
 		sc_start4(src,bl,SC_BURNING,100,skill_lv,1000,src->id,0,skill_get_time2(skill_id,skill_lv));
 		break;
@@ -2341,7 +2349,7 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 				continue; // one or more trigger conditions were not fulfilled
 
 			skill = it.id;
-
+			
 			sd->state.autocast = 1;
 			if ( skill_isNotOk(skill, sd) ) {
 				sd->state.autocast = 0;
@@ -2372,11 +2380,11 @@ int skill_additional_effect(struct block_list* src, struct block_list *bl, uint1
 
 			if (skill == PF_SPIDERWEB) //Special case, due to its nature of coding.
 				type = CAST_GROUND;
+				
 #ifndef RENEWAL
 			else if (skill == AS_SONICBLOW)
 				pc_stop_attack(sd); //Special case, Sonic Blow autospell should stop the player attacking.
 #endif
-
 			sd->state.autocast = 1;
 			skill_consume_requirement(sd,skill,autospl_skill_lv,1);
 #ifndef RENEWAL
@@ -2718,6 +2726,7 @@ int skill_counter_additional_effect (struct block_list* src, struct block_list *
 
 			uint16 autospl_skill_id = it.id, autospl_skill_lv = it.lv ? it.lv : 1;
 
+			
 			if (it.flag & AUTOSPELL_FORCE_RANDOM_LEVEL)
 				autospl_skill_lv = rnd_value( 1, autospl_skill_lv );
 
@@ -2975,20 +2984,28 @@ bool skill_strip_equip(struct block_list *src, struct block_list *target, uint16
 		case RG_STRIPSHIELD:
 		case RG_STRIPHELM:
 		case GC_WEAPONCRUSH:
+		/*
 			rate = 50 * (skill_lv + 1) + 2 * (sstatus->dex - tstatus->dex);
+			//rate = max(min_rate, rate);
+			mod = 1000;
+		*/
+			rate = cap_value( 20 * skill_lv + (sstatus->dex - tstatus->dex),0,500);
 			mod = 1000;
 			break;
 		case ST_FULLSTRIP: {
-			int min_rate = 50 + 20 * skill_lv;
-
-			rate = min_rate + 2 * (sstatus->dex - tstatus->dex);
-			rate = max(min_rate, rate);
+			//int min_rate = 50 + 20 * skill_lv;
+			//rate = min_rate + 2 * (sstatus->dex - tstatus->dex);
+			//rate = max(min_rate, rate);
+			//mod = 1000;
+			rate = cap_value( 50 * skill_lv + (sstatus->dex - tstatus->dex),0,500);
 			mod = 1000;
 			break;
 		}
 		case GS_DISARM:
-			rate = sstatus->dex / (4 * (7 - skill_lv)) + sstatus->luk / (4 * (6 - skill_lv));
-			rate = rate + status_get_lv(src) - (tstatus->agi * rate / 100) - tstatus->luk - status_get_lv(target);
+			//rate = sstatus->dex / (4 * (7 - skill_lv)) + sstatus->luk / (4 * (6 - skill_lv));
+			//rate = rate + status_get_lv(src) - (tstatus->agi * rate / 100) - tstatus->luk - status_get_lv(target);
+			rate = cap_value( 20 * skill_lv + (sstatus->dex - tstatus->dex),0,500);
+			mod = 1000;
 			break;
 		case WL_EARTHSTRAIN: {
 			int job_lv = 0;
@@ -3031,10 +3048,12 @@ bool skill_strip_equip(struct block_list *src, struct block_list *target, uint16
 				time = skill_get_time(skill_id, skill_lv);
 
 			if (target->type == BL_PC)
-				time += max(1, skill_lv + 500 * (sstatus->dex - tstatus->dex));
+				//time += max(1, skill_lv + 500 * (sstatus->dex - tstatus->dex));
+				time += max(1, skill_lv );
 			else {
 				time += 15000;
-				time += max(1, skill_lv + 500 * (sstatus->dex - tstatus->dex));
+				//time += max(1, skill_lv + 500 * (sstatus->dex - tstatus->dex));
+				time += max(1, skill_lv );
 			}
 			break;
 	}
@@ -3064,14 +3083,15 @@ bool skill_strip_equip(struct block_list *src, struct block_list *target, uint16
 			location = EQP_SHADOW_GEAR;
 			break;
 	}
-
+	/*
 	for (uint8 i = 0; i < ARRAYLENGTH(pos); i++) {
 		if (location&pos[i] && sc_def[i] > SC_NONE && tsc->getSCE(sc_def[i]))
 			location &=~ pos[i];
 	}
+	*/
 	if (!location)
 		return false;
-
+	
 	for (uint8 i = 0; i < ARRAYLENGTH(pos); i++) {
 		if (location&pos[i] && !sc_start(src, target, sc_atk[i], 100, skill_lv, time))
 			location &=~ pos[i];
@@ -5442,8 +5462,8 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 				if (!map_check_dir(dir, t_dir) || bl->type == BL_SKILL) {
 #endif
 					status_change_end(src, SC_HIDING);
-					dir = dir < 4 ? dir+4 : dir-4; // change direction [Celest]
-					unit_setdir(bl,dir);
+					//dir = dir < 4 ? dir+4 : dir-4; // change direction [Celest]	/*extreme_custom_src*/
+					//unit_setdir(bl,dir);											/*extreme_custom_src*/
 #ifdef RENEWAL
 					clif_blown(src);
 #endif
@@ -5923,13 +5943,7 @@ int skill_castend_damage_id (struct block_list* src, struct block_list *bl, uint
 			// Chain effect and check range gets reduction by recursive depth, as this can reach 0, we don't use blowcount
 			c = (skill_lv-(flag&0xFFF)+1)/2;
 			// Determine the Bowling Bash area depending on configuration
-			
-			if (battle_config.bowling_bash_area == 0 && sc->getSCE(SC_ABILITY)) {
-				min_x = src->x - 20;
-				max_x = src->x + 20;
-				min_y = src->y - 20;
-				max_y = src->y + 20;
-			} else if (battle_config.bowling_bash_area == 0) {
+			if (battle_config.bowling_bash_area == 0) {
 				// Gutter line system
 				min_x = ((src->x)-c) - ((src->x)-c)%40;
 				if(min_x < 0) min_x = 0;
@@ -10092,8 +10106,8 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 			break;
 		if (potion_hp || potion_sp) {
 			int hp = potion_hp, sp = potion_sp;
-			hp = hp * (100 + (tstatus->vit * 2))/100;
-			sp = sp * (100 + (tstatus->int_ * 2))/100;
+			hp = hp * 50 * (100 + (tstatus->vit<<1))/100;
+			sp = sp * 50 * (100 + (tstatus->int_<<1))/100;
 			if (dstsd) {
 				if (hp)
 					hp = hp * (100 + pc_checkskill(dstsd,SM_RECOVERY)*10 + pc_skillheal2_bonus(dstsd, skill_id))/100;
@@ -10175,7 +10189,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 #ifndef RENEWAL
 			(tsc && tsc->getSCE(SC_BASILICA)) ||
 #endif
-			(dstmd && ((dstmd->guardian_data && dstmd->mob_id == MOBID_EMPERIUM) || status_get_class_(bl) == CLASS_BATTLEFIELD)) ) {
+			(dstmd && ((dstmd->guardian_data && dstmd->mob_id == MOBID_EMPERIUM) || status_get_class_(bl) == CLASS_BATTLEFIELD || status_get_class_(bl) == CLASS_BOSS)) ) {
 				if( sd )
 					clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
 
@@ -10377,6 +10391,7 @@ int skill_castend_nodamage_id (struct block_list *src, struct block_list *bl, ui
 
 	case SG_HATE:
 		if (sd) {
+			pc_resethate(sd);
 			clif_skill_nodamage(src,bl,skill_id,skill_lv,1);
 			if (!pc_set_hate_mob(sd, skill_lv-1, bl))
 				clif_skill_fail(sd,skill_id,USESKILL_FAIL_LEVEL,0);
@@ -14714,22 +14729,36 @@ std::shared_ptr<s_skill_unit_group> skill_unitsetting(struct block_list *src, ui
 			val1 += pc_checkskill(sd, DC_DANCINGLESSON);
 		break;
 	case BA_POEMBRAGI:
-		val1 = 3 * skill_lv + status->dex / 10; // Casting time reduction
+		//val1 = 3 * skill_lv + status->dex / 10; // Casting time reduction 10+30+
+		val1 = 6 * skill_lv + status->dex / 50; // Casting time reduction 60+20+20 (int = 1000)
 		//For some reason at level 10 the base delay reduction is 50%.
-		val2 = (skill_lv < 10 ? 3 * skill_lv : 50) + status->int_ / 5; // After-cast delay reduction
+		//val2 = (skill_lv < 10 ? 3 * skill_lv : 50) + status->int_ / 5; // After-cast delay reduction 50+20+
+		val2 = 6 * skill_lv + status->int_ / 50; // After-cast delay reduction 60+20+20 (int = 1000)
 		if (sd) {
-			val1 += pc_checkskill(sd, BA_MUSICALLESSON);
+			val1 += 2 * pc_checkskill(sd, BA_MUSICALLESSON);
 			val2 += 2 * pc_checkskill(sd, BA_MUSICALLESSON);
 		}
 		break;
+//	case DC_DONTFORGETME:
+//#ifdef RENEWAL
+//		val1 = 3 * skill_lv + status->dex / 15; // ASPD decrease
+//		val2 = 2 * skill_lv + status->agi / 20; // Movement speed adjustment.
+//#else
+//		val1 = 5 + 3 * skill_lv + status->dex / 10; // ASPD decrease
+//		val2 = 5 + 3 * skill_lv + status->agi / 10; // Movement speed adjustment.
 	case DC_DONTFORGETME:
+/*
 #ifdef RENEWAL
 		val1 = 3 * skill_lv + status->dex / 15; // ASPD decrease
 		val2 = 2 * skill_lv + status->agi / 20; // Movement speed adjustment.
 #else
 		val1 = 5 + 3 * skill_lv + status->dex / 10; // ASPD decrease
 		val2 = 5 + 3 * skill_lv + status->agi / 10; // Movement speed adjustment.
-#endif		
+#endif
+*/
+		val1 = 5 + 3 * skill_lv + status->dex / 10; // ASPD decrease					/*extreme_custom_src*/
+		val2 = 5 + 3 * skill_lv + status->agi / 10; // Movement speed adjustment.		/*extreme_custom_src*/ OK
+		
 		if (sd) {
 			val1 += pc_checkskill(sd, DC_DANCINGLESSON);
 #ifdef RENEWAL
@@ -15708,20 +15737,6 @@ int skill_unit_onplace_timer(struct skill_unit *unit, struct block_list *bl, t_t
 			break;
 
 		case UNT_MAGNUS:
-#ifndef RENEWAL
-			//if (!battle_check_undead(tstatus->race,tstatus->def_ele) && tstatus->race!=RC_DEMON)
-			//		break;
-			//if (!pc_readglobalreg(sd,add_str("PR_MAGNUS")))
-			//		break;
-				//if (!sd->special_state.no_gemstone)
-			if (!battle_check_undead(tstatus->race,tstatus->def_ele) && tstatus->race!=RC_DEMON && !sc->getSCE(SC_ABILITY))
-					break;
-			//if (battle_check_undead(tstatus->race,tstatus->def_ele) && tstatus->race!=RC_DEMON || sc->getSCE(SC_ABILITY))
-			//	skill_attack(BF_MAGIC,ss,&unit->bl,bl,sg->skill_id,sg->skill_lv,tick,0);
-			//	break;
-			//	if (!sc->getSCE(SC_ABILITY))
-			//		break;	
-#endif				
 			skill_attack(BF_MAGIC,ss,&unit->bl,bl,sg->skill_id,sg->skill_lv,tick,0);
 			break;
 
@@ -18280,6 +18295,7 @@ void skill_consume_requirement(map_session_data *sd, uint16 skill_id, uint16 ski
 				continue;
 
 			if( itemdb_group.item_exists(IG_GEMSTONE, require.itemid[i]) && skill_id != HW_GANBANTEIN && sc && sc->getSCE(SC_SPIRIT) && sc->getSCE(SC_SPIRIT)->val2 == SL_WIZARD )
+			//if( itemdb_group.item_exists(IG_GEMSTONE, require.itemid[i]) &&  sc && sc->getSCE(SC_SPIRIT) && sc->getSCE(SC_SPIRIT)->val2 == SL_WIZARD )
 				continue; //Gemstones are checked, but not substracted from inventory.
 
 			switch( skill_id ){
@@ -18351,10 +18367,7 @@ struct s_skill_condition skill_get_requirement(map_session_data* sd, uint16 skil
 	if(hp_rate > 0)
 		req.hp += (status->hp * hp_rate)/100;
 	else
-		req.hp += (status->max_hp * (-hp_rate))/100;
-	
-	if (sc->getSCE(SC_ABILITY))
-		req.hp = req.hp/2;
+		req.hp += (status->max_hp * (-hp_rate))/100;	
 	
 	req.sp = skill->require.sp[skill_lv-1];
 	if((sd->skill_id_old == BD_ENCORE) && skill_id == sd->skill_id_dance)
@@ -18424,10 +18437,7 @@ struct s_skill_condition skill_get_requirement(map_session_data* sd, uint16 skil
 		else
 			req.zeny += 1000;
 	}
-	
-	if (sc->getSCE(SC_ABILITY))
-		req.zeny = 0;
-	
+		
 	req.spiritball = skill->require.spiritball[skill_lv-1];
 	req.state = skill->require.state;
 
@@ -18530,7 +18540,8 @@ struct s_skill_condition skill_get_requirement(map_session_data* sd, uint16 skil
 					else {
 						if( sd->special_state.no_gemstone || (sc && sc->getSCE(SC_INTOABYSS)) )
 						{	// All gem skills except Hocus Pocus and Ganbantein can cast for free with Mistress card -helvetica
-							if (skill_id != SA_ABRACADABRA && skill_id != HW_GANBANTEIN)
+							//if (skill_id != SA_ABRACADABRA && skill_id != HW_GANBANTEIN)
+							if (skill_id != SA_ABRACADABRA)
 		 						req.itemid[i] = req.amount[i] = 0;
 							else if( --req.amount[i] < 1 )
 								req.amount[i] = 1; // Hocus Pocus always use at least 1 gem
@@ -18723,6 +18734,8 @@ int skill_castfix(struct block_list *bl, uint16 skill_id, uint16 skill_lv) {
 
 			if (scale > 0)	// not instant cast
 				time = time * (float)scale / battle_config.castrate_dex_scale;
+			if (scale < 0 && sc->getSCE(SC_QUAGMIRE))	/*extreme_custom_src*/
+				time = time * 5/100;
 			else
 				return 0; // instant cast
 		}

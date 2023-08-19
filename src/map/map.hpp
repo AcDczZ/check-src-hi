@@ -666,6 +666,9 @@ enum e_mapflag : int16 {
 	MF_NOBUYINGSTORE,
 	MF_NODYNAMICNPC,
 	MF_MVP,
+	MF_ATK_RATE,
+	MF_DROPEVENT1,
+	MF_DROPEVENT2,
 	MF_MAX
 };
 
@@ -706,12 +709,29 @@ struct s_drop_list {
 	enum e_nightmare_drop_type drop_type;
 };
 
+/// Enum of global damage types [Cydh]
+enum e_global_damage_rate_type : uint8 {
+	DMGRATE_BL,
+	DMGRATE_SHORT,
+	DMGRATE_LONG,
+	DMGRATE_WEAPON,
+	DMGRATE_MAGIC,
+	DMGRATE_MISC,
+	DMGRATE_MAX,
+};
+
+// Map-based damage rate [Cydh]
+struct s_global_damage_rate {
+	int rate[DMGRATE_MAX];
+};
+
 /// Union for mapflag values
 union u_mapflag_args {
 	struct point nosave;
 	struct s_drop_list nightmaredrop;
 	struct s_skill_damage skill_damage;
 	struct s_skill_duration skill_duration;
+	struct s_global_damage_rate atk_rate;
 	int flag_val;
 };
 
@@ -811,6 +831,7 @@ struct map_data {
 	struct s_skill_damage damage_adjust; // Used for overall skill damage adjustment
 	std::unordered_map<uint16, s_skill_damage> skill_damage; // Used for single skill damage adjustment
 	std::unordered_map<uint16, int> skill_duration;
+	struct s_global_damage_rate atk_rate; // Global Damage [Cydh]
 
 	struct npc_data *npc[MAX_NPC_PER_MAP];
 	struct spawn_data *moblist[MAX_MOB_LIST_PER_MAP]; // [Wizputer]

@@ -50,9 +50,9 @@
 	#define DEFTYPE_MIN SHRT_MIN
 	#define DEFTYPE_MAX SHRT_MAX
 #else
-	typedef signed char defType;
-	#define DEFTYPE_MIN CHAR_MIN
-	#define DEFTYPE_MAX CHAR_MAX
+	typedef short defType;			/*extreme_custom_src*/
+	#define DEFTYPE_MIN SHRT_MIN	/*extreme_custom_src*/
+	#define DEFTYPE_MAX SHRT_MAX	/*extreme_custom_src*/
 #endif
 
 /**

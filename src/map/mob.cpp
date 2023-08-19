@@ -2514,36 +2514,47 @@ int mob_getdroprate(struct block_list *src, std::shared_ptr<s_mob_db> mob, int b
 				drop_rate_bonus += sd->sc.getSCE(SC_APACHE_ITEMBOOST_S)->val1;
 			
 			// Seperate Bubble Gum
-			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM5) && type == IT_CARD && mob->status.class_ != CLASS_BOSS)
-				drop_rate_bonus += sd->sc.getSCE(SC_CARD_BUBBLE_GUM5)->val1;
-			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM25) && type == IT_CARD && mob->status.class_ != CLASS_BOSS)
-				drop_rate_bonus += sd->sc.getSCE(SC_CARD_BUBBLE_GUM25)->val1;
-			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM50) && type == IT_CARD && mob->status.class_ != CLASS_BOSS)
+			if (sd->sc.getSCE(SC_USABLE_BUBBLE_GUM50) && (type == IT_HEALING || type == IT_USABLE || type == IT_CASH) )
+				drop_rate_bonus += sd->sc.getSCE(SC_USABLE_BUBBLE_GUM50)->val1;
+			if (sd->sc.getSCE(SC_USABLE_BUBBLE_GUM100) && type == IT_USABLE )
+				drop_rate_bonus += sd->sc.getSCE(SC_USABLE_BUBBLE_GUM100)->val1;
+			
+		if (sd->sc.getSCE(SC_EQ_BUBBLE_GUM50) && (type == IT_WEAPON || type == IT_ARMOR) )
+				drop_rate_bonus += sd->sc.getSCE(SC_EQ_BUBBLE_GUM50)->val1;
+			if (sd->sc.getSCE(SC_EQ_BUBBLE_GUM100) && type == IT_CARD )
+				drop_rate_bonus += sd->sc.getSCE(SC_EQ_BUBBLE_GUM100)->val1;
+			
+			if (sd->sc.getSCE(SC_ETC_BUBBLE_GUM50) && type == IT_ETC )
+				drop_rate_bonus += sd->sc.getSCE(SC_ETC_BUBBLE_GUM50)->val1;
+			if (sd->sc.getSCE(SC_ETC_BUBBLE_GUM100) && type == IT_ETC )
+				drop_rate_bonus += sd->sc.getSCE(SC_ETC_BUBBLE_GUM100)->val1;
+			
+			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM50) && type == IT_CARD )
 				drop_rate_bonus += sd->sc.getSCE(SC_CARD_BUBBLE_GUM50)->val1;
-			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM100) && type == IT_CARD && mob->status.class_ != CLASS_BOSS)
+			if (sd->sc.getSCE(SC_CARD_BUBBLE_GUM100) && type == IT_CARD )
 				drop_rate_bonus += sd->sc.getSCE(SC_CARD_BUBBLE_GUM100)->val1;
 			
 			// Member Topup
 			if( sd->sc.getSCE(SC_MEMBERLV1) )
-				drop_rate_bonus += 2;		
+				drop_rate_bonus += 5;		
 			if( sd->sc.getSCE(SC_MEMBERLV2) )
-				drop_rate_bonus += 3;		
-			if( sd->sc.getSCE(SC_MEMBERLV3) )
-				drop_rate_bonus += 4;		
-			if( sd->sc.getSCE(SC_MEMBERLV4) )
 				drop_rate_bonus += 10;		
-			if( sd->sc.getSCE(SC_MEMBERLV5) )
-				drop_rate_bonus += 12;		
-			if( sd->sc.getSCE(SC_MEMBERLV6) )
+			if( sd->sc.getSCE(SC_MEMBERLV3) )
 				drop_rate_bonus += 15;		
-			if( sd->sc.getSCE(SC_MEMBERLV7) )
-				drop_rate_bonus += 17;		
-			if( sd->sc.getSCE(SC_MEMBERLV8) )
-				drop_rate_bonus += 18;		
-			if( sd->sc.getSCE(SC_MEMBERLV9) )
+			if( sd->sc.getSCE(SC_MEMBERLV4) )
 				drop_rate_bonus += 20;		
+			if( sd->sc.getSCE(SC_MEMBERLV5) )
+				drop_rate_bonus += 25;		
+			if( sd->sc.getSCE(SC_MEMBERLV6) )
+				drop_rate_bonus += 30;		
+			if( sd->sc.getSCE(SC_MEMBERLV7) )
+				drop_rate_bonus += 35;		
+			if( sd->sc.getSCE(SC_MEMBERLV8) )
+				drop_rate_bonus += 40;		
+			if( sd->sc.getSCE(SC_MEMBERLV9) )
+				drop_rate_bonus += 45;		
 			if( sd->sc.getSCE(SC_MEMBERLV10) )
-				drop_rate_bonus += 25;
+				drop_rate_bonus += 50;
 			
 			// Vote Playserver
 			if( sd->sc.getSCE(SC_VOTELV1) )
@@ -2582,6 +2593,14 @@ int mob_getdroprate(struct block_list *src, std::shared_ptr<s_mob_db> mob, int b
 			}else{
 				drop_rate = (int)( 0.5 + drop_rate * drop_rate_bonus / 100. );
 			}
+
+			if( map_getmapflag(src->m, MF_DROPEVENT1) )
+				drop_rate = drop_rate * battle_config.MF_DROPEVENT1 / 100;
+			
+			if( map_getmapflag(src->m, MF_DROPEVENT2) )
+				drop_rate = drop_rate * battle_config.MF_DROPEVENT2 / 100;
+			
+			
 			// Now limit the drop rate to never be exceed the cap (default: 90%), unless it is originally above it already.
 			if( drop_rate > cap && base_rate < cap ){
 				drop_rate = cap;
@@ -5040,6 +5059,18 @@ uint64 MobDatabase::parseBodyNode(const ryml::NodeRef& node) {
 		if (!exists)
 			mob->damagetaken = 100;
 	}
+	
+	if (this->nodeExists(node, "DamageTaken2")) {
+		uint16 damage;
+
+		if (!this->asUInt16Rate(node, "DamageTaken2", damage, 100))
+			return 0;
+
+		mob->damagetaken2 = damage;
+	} else {
+		if (!exists)
+			mob->damagetaken2 = 100;
+	}
 
 	if (this->nodeExists(node, "Ai")) {
 		std::string ai;
@@ -5287,6 +5318,8 @@ static bool mob_read_sqldb_sub(std::vector<std::string> str) {
 		node["DamageMotion"] << str[index];
 	if (!str[++index].empty())
 		node["DamageTaken"] << str[index];
+	if (!str[++index].empty())
+		node["DamageTaken2"] << str[index];
 	if (!str[++index].empty() && strcmp(str[index].c_str(), "06") != 0)
 		node["Ai"] << str[index];
 	if (!str[++index].empty() && strcmp(str[index].c_str(), "Normal") != 0)

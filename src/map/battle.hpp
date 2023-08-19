@@ -521,6 +521,15 @@ struct Battle_Config
 	int bg_misc_damage_rate;
 	int bg_flee_penalty;
 
+	// Global Damage adjustment. [Cydh]
+	int atk_adjustment_map;
+	int atk_damage_attacker;
+	int atk_short_damage_rate;
+	int atk_long_damage_rate;
+	int atk_weapon_damage_rate;
+	int atk_magic_damage_rate;
+	int atk_misc_damage_rate;
+
 	// rAthena
 	int max_third_parameter;
 	int max_baby_third_parameter;
@@ -762,6 +771,11 @@ struct Battle_Config
 	int chat_clone_delay;
 	int chat_clone_zenycost;
 	int chat_msg_color;
+	
+	
+	int NJ_ISSEN;
+	int MF_DROPEVENT1;
+	int MF_DROPEVENT2;
 
 #include "../custom/battle_config_struct.inc"
 };
